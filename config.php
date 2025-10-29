@@ -7,7 +7,7 @@
 
 /* Database credentials. Assuming you are running MySQL
 server with default setting (user 'root' with no password) */
-define('DB_SERVER', '127.0.0.1');
+define('DB_SERVER', '192.168.1.135');
 define('DB_USERNAME', 'mxnticek');
 define('DB_PASSWORD', '+(!SWCIR%p_@');
 define('DB_NAME', 'transport_admin');

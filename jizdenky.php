@@ -127,481 +127,506 @@ if ($_POST && isset($_POST['from_zone']) && isset($_POST['to_zone'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DÚK Tarify</title>
+    <title>DÚK Tarify - Dopravní Údaje Kolektiv</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+    tailwind.config = {
+        darkMode: 'media',
+        theme: {
+            extend: {
+                colors: {
+                    primary: {
+                        50: '#eff6ff',
+                        100: '#dbeafe',
+                        200: '#bfdbfe',
+                        300: '#93c5fd',
+                        400: '#60a5fa',
+                        500: '#3b82f6',
+                        600: '#2563eb',
+                        700: '#1d4ed8',
+                        800: '#1e40af',
+                        900: '#1e3a8a',
+                    }
+                }
+            }
+        }
+    }
+    </script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+    :root {
+        --text: #0f172a;
+        --text-light: #64748b;
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8fafc;
+        --accent: #2563eb;
+        --border: #e2e8f0;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --error: #ef4444;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --text: #f8fafc;
+            --text-light: #94a3b8;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --accent: #3b82f6;
+            --border: #334155;
+            --success: #34d399;
+            --warning: #fbbf24;
+            --error: #f87171;
         }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #f8f9fa;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        
-        .header {
-            background: #2c3e50;
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            font-size: 1.8rem;
-            font-weight: 300;
-            margin-bottom: 5px;
-        }
-        
-        .header p {
-            opacity: 0.8;
-            font-size: 0.9rem;
-        }
-        
-        .content {
-            padding: 30px;
-        }
-        
-        .section {
-            margin-bottom: 40px;
-        }
-        
-        .section h2 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-size: 1.3rem;
-            font-weight: 400;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #eee;
-        }
-        
+    }
+
+    body {
+        background-color: var(--bg-secondary);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .autocomplete-container {
+        position: relative;
+    }
+
+    .autocomplete-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        background-color: var(--bg-primary);
+        color: var(--text);
+        font-size: 1rem;
+        transition: all 0.2s;
+    }
+
+    .autocomplete-input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    }
+
+    .autocomplete-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--bg-primary);
+        border: 1px solid var(--border);
+        border-top: none;
+        border-radius: 0 0 0.5rem 0.5rem;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+    }
+
+    .autocomplete-item {
+        padding: 12px;
+        cursor: pointer;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.9rem;
+        transition: background-color 0.2s;
+    }
+
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+
+    .autocomplete-item:hover, .autocomplete-item.selected {
+        background: var(--bg-secondary);
+    }
+
+    .autocomplete-type {
+        color: var(--text-light);
+        font-size: 0.8rem;
+        margin-left: 8px;
+    }
+
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+        width: auto;
+    }
+
+    .btn {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.2s;
+        font-weight: 500;
+    }
+
+    .btn:hover {
+        background: var(--accent);
+        filter: brightness(1.1);
+    }
+
+    .alert {
+        padding: 15px;
+        border-radius: 0.5rem;
+        margin-bottom: 20px;
+    }
+
+    .alert-error {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--error);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .alert-info {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .results {
+        background: var(--bg-secondary);
+        border-radius: 0.5rem;
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .offer {
+        background: var(--bg-primary);
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .offer:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .offer:last-child {
+        margin-bottom: 0;
+    }
+
+    .price {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--accent);
+        margin-bottom: 10px;
+    }
+
+    .offer-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+    }
+
+    .offer-details strong {
+        color: var(--text-light);
+    }
+
+    .products {
+        border-top: 1px solid var(--border);
+        padding-top: 15px;
+        margin-top: 15px;
+    }
+
+    .product {
+        background: var(--bg-secondary);
+        padding: 10px;
+        border-radius: 0.25rem;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .stat {
+        text-align: center;
+        padding: 15px;
+        background: var(--bg-primary);
+        border-radius: 0.5rem;
+        border: 1px solid var(--border);
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--accent);
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    @media (max-width: 600px) {
         .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 6px;
-            color: #555;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-        
-        select, input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-            background: white;
-            transition: border-color 0.2s;
-        }
-        
-        select:focus, input[type="text"]:focus {
-            outline: none;
-            border-color: #3498db;
-        }
-        
-        .autocomplete-container {
-            position: relative;
-        }
-        
-        .autocomplete-input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-            background: white;
-            transition: border-color 0.2s;
-        }
-        
-        .autocomplete-input:focus {
-            outline: none;
-            border-color: #3498db;
-        }
-        
-        .autocomplete-results {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #ddd;
-            border-top: none;
-            border-radius: 0 0 4px 4px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-        }
-        
-        .autocomplete-item {
-            padding: 12px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 0.9rem;
-        }
-        
-        .autocomplete-item:last-child {
-            border-bottom: none;
-        }
-        
-        .autocomplete-item:hover, .autocomplete-item.selected {
-            background: #f8f9fa;
-        }
-        
-        .autocomplete-type {
-            color: #666;
-            font-size: 0.8rem;
-            margin-left: 8px;
+            grid-template-columns: 1fr;
         }
         
         .checkbox-group {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .checkbox-item input[type="checkbox"] {
-            width: auto;
-        }
-        
-        .btn {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background-color 0.2s;
-        }
-        
-        .btn:hover {
-            background: #2980b9;
-        }
-        
-        .btn:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-        }
-        
-        .alert {
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-        
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .alert-info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-        
-        .results {
-            background: #f8f9fa;
-            border-radius: 4px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-        
-        .offer {
-            background: white;
-            border: 1px solid #e9ecef;
-            border-radius: 4px;
-            padding: 20px;
-            margin-bottom: 15px;
-        }
-        
-        .offer:last-child {
-            margin-bottom: 0;
-        }
-        
-        .price {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 10px;
+            flex-direction: column;
+            gap: 10px;
         }
         
         .offer-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
+            grid-template-columns: 1fr;
         }
-        
-        .offer-details strong {
-            color: #555;
-        }
-        
-        .products {
-            border-top: 1px solid #eee;
-            padding-top: 15px;
-            margin-top: 15px;
-        }
-        
-        .product {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 3px;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-        
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .stat {
-            text-align: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 4px;
-        }
-        
-        .stat-number {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #3498db;
-        }
-        
-        .stat-label {
-            font-size: 0.8rem;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        @media (max-width: 600px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .checkbox-group {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .offer-details {
-                grid-template-columns: 1fr;
-            }
-        }
+    }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>DÚK Vyhledávač Tarifů</h1>
-            <p>Doprava Ústeckého kraje</p>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <header class="py-6 mb-8 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl md:text-4xl font-bold text-center">Dopravní Údaje Kolektiv</h1>
+            <p class="text-blue-200 text-center mt-2">Vyhledávač tarifů DÚK</p>
+            <div class="mt-4 flex justify-center space-x-4">
+                <a href="index.php" class="bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                    <i class="fas fa-home mr-2"></i>
+                    Hlavní stránka
+                </a>
+                <a href="login.php" class="bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Přihlášení
+                </a>
+            </div>
         </div>
+    </header>
         
-        <div class="content">
-            <!-- Tariff Status -->
-            <div class="section">
-                <?php if ($error): ?>
-                    <div class="alert alert-error">
-                        <strong>Chyba při načítání tarifů:</strong> <?= htmlspecialchars($error) ?>
-                    </div>
-                <?php else: ?>
-                    <div class="alert alert-info">
-                        <strong>Tarify načteny úspěšně</strong><br>
-                        Platnost od: <?= date('j.n.Y', strtotime($tariffs['validFrom'])) ?>
-                    </div>
-                    
-                    <div class="stats">
-                        <div class="stat">
-                            <div class="stat-number"><?= count($zones) ?></div>
-                            <div class="stat-label">Zóny</div>
+</style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <header class="py-6 mb-8 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl md:text-4xl font-bold text-center">Dopravní Údaje Kolektiv</h1>
+            <p class="text-blue-200 text-center mt-2">Vyhledávač tarifů DÚK</p>
+            <div class="mt-4 flex justify-center space-x-4">
+                <a href="index.php" class="bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                    <i class="fas fa-home mr-2"></i>
+                    Hlavní stránka
+                </a>
+                <a href="login.php" class="bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Přihlášení
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 mb-12 flex-grow">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden max-w-4xl mx-auto">
+            <div class="p-8">
+                <!-- Tariff Status -->
+                <div class="mb-8">
+                    <?php if ($error): ?>
+                        <div class="alert alert-error">
+                            <div class="flex items-center">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <strong>Chyba při načítání tarifů:</strong> <?= htmlspecialchars($error) ?>
+                            </div>
                         </div>
-                        <div class="stat">
-                            <div class="stat-number"><?= count($cps) ?></div>
-                            <div class="stat-label">Cenové profily</div>
+                    <?php else: ?>
+                        <div class="alert alert-info">
+                            <div class="flex items-center">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                <div>
+                                    <strong>Tarify načteny úspěšně</strong><br>
+                                    Platnost od: <?= date('j.n.Y', strtotime($tariffs['validFrom'])) ?>
+                                </div>
+                            </div>
                         </div>
-                        <div class="stat">
-                            <div class="stat-number"><?= count($stops) ?></div>
-                            <div class="stat-label">Zastávky</div>
+                        
+                        <div class="stats">
+                            <div class="stat">
+                                <div class="stat-number"><?= count($zones) ?></div>
+                                <div class="stat-label">Zóny</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number"><?= count($cps) ?></div>
+                                <div class="stat-label">Cenové profily</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number"><?= count($stops) ?></div>
+                                <div class="stat-label">Zastávky</div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                
+                <!-- Price Search Form -->
+                <?php if (!$error): ?>
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Vyhledání cen</h2>
+                    <form method="post" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="form-group">
+                                <label for="from_zone" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Z:</label>
+                                <div class="autocomplete-container">
+                                    <input type="text" 
+                                           class="autocomplete-input" 
+                                           id="from_input" 
+                                           placeholder="Začněte psát název zóny nebo zastávky..."
+                                           value="<?= htmlspecialchars($_POST['from_display'] ?? '') ?>"
+                                           autocomplete="off">
+                                    <input type="hidden" name="from_zone" id="from_zone" value="<?= htmlspecialchars($_POST['from_zone'] ?? '') ?>">
+                                    <input type="hidden" name="from_display" id="from_display" value="<?= htmlspecialchars($_POST['from_display'] ?? '') ?>">
+                                    <div class="autocomplete-results" id="from_results"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="to_zone" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Do:</label>
+                                <div class="autocomplete-container">
+                                    <input type="text" 
+                                           class="autocomplete-input" 
+                                           id="to_input" 
+                                           placeholder="Začněte psát název zóny nebo zastávky..."
+                                           value="<?= htmlspecialchars($_POST['to_display'] ?? '') ?>"
+                                           autocomplete="off">
+                                    <input type="hidden" name="to_zone" id="to_zone" value="<?= htmlspecialchars($_POST['to_zone'] ?? '') ?>">
+                                    <input type="hidden" name="to_display" id="to_display" value="<?= htmlspecialchars($_POST['to_display'] ?? '') ?>">
+                                    <div class="autocomplete-results" id="to_results"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="checkbox-group flex flex-col md:flex-row gap-4">
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="network" id="network" <?= isset($_POST['network']) ? 'checked' : '' ?> class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                <label for="network" class="text-sm font-medium text-gray-700 dark:text-gray-300">Síťové jízdné</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="bags" id="bags" <?= isset($_POST['bags']) ? 'checked' : '' ?> class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                <label for="bags" class="text-sm font-medium text-gray-700 dark:text-gray-300">Zavazadla</label>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">
+                            <i class="fas fa-search mr-2"></i>
+                            Vyhledat ceny
+                        </button>
+                    </form>
+                </div>
+                <?php endif; ?>
+                
+                <!-- Price Results -->
+                <?php if ($priceError): ?>
+                    <div class="mb-8">
+                        <div class="alert alert-error">
+                            <div class="flex items-center">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <strong>Chyba při vyhledávání:</strong> <?= htmlspecialchars($priceError) ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php elseif ($priceResults): ?>
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Výsledky vyhledávání</h2>
+                        
+                        <?php if (isset($priceResults['zoneDistance'])): ?>
+                            <p class="text-gray-700 dark:text-gray-300 mb-4"><strong>Vzdálenost zón:</strong> <?= $priceResults['zoneDistance'] ?></p>
+                        <?php endif; ?>
+                        
+                        <div class="results">
+                            <?php 
+                            $hasOffers = false;
+                            if (isset($priceResults['coverages'])):
+                                foreach ($priceResults['coverages'] as $coverage):
+                                    if (isset($coverage['offers'])):
+                                        foreach ($coverage['offers'] as $offer):
+                                            $hasOffers = true;
+                                            
+                                            // Find CP and TP names
+                                            $cpName = 'N/A';
+                                            $tpName = 'N/A';
+                                            
+                                            foreach ($cps as $cp) {
+                                                if ($cp['number'] == $offer['cp']) {
+                                                    $cpName = $cp['name'];
+                                                    break;
+                                                }
+                                            }
+                                            
+                                            foreach ($tps as $tp) {
+                                                if ($tp['number'] == $offer['tp']) {
+                                                    $tpName = $tp['name'];
+                                                    break;
+                                                }
+                                            }
+                            ?>
+                            <div class="offer">
+                                <div class="price"><?= formatPrice($offer['price']) ?></div>
+                                
+                                <div class="offer-details">
+                                    <div><strong>Profil:</strong> <?= htmlspecialchars($cpName) ?></div>
+                                    <div><strong>Typ:</strong> <?= htmlspecialchars($tpName) ?></div>
+                                    <div><strong>Formát:</strong> <?= htmlspecialchars($offer['format'] ?? 'N/A') ?></div>
+                                    <div><strong>Platba:</strong> <?= htmlspecialchars($offer['payment'] ?? 'N/A') ?></div>
+                                </div>
+                                
+                                <?php if (isset($offer['products']) && !empty($offer['products'])): ?>
+                                <div class="products">
+                                    <strong class="text-gray-700 dark:text-gray-300">Produkty:</strong>
+                                    <?php foreach ($offer['products'] as $product): ?>
+                                    <div class="product">
+                                        <?= htmlspecialchars($product['name']) ?>
+                                        <?php if (isset($product['validDurationMinutes'])): ?>
+                                            (<?= $product['validDurationMinutes'] ?> min)
+                                        <?php endif; ?>
+                                        <?php if (isset($product['validDurationDays'])): ?>
+                                            (<?= $product['validDurationDays'] ?> dní)
+                                        <?php endif; ?>
+                                        <?php if (isset($product['transfer']) && $product['transfer']): ?>
+                                            <span class="text-green-600 dark:text-green-400 ml-2">✓ Přestupní</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <?php endforeach; ?>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                            <?php 
+                                        endforeach;
+                                    endif;
+                                endforeach;
+                            endif;
+                            
+                            if (!$hasOffers): ?>
+                                <div class="alert alert-info">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-info-circle mr-2"></i>
+                                        Pro zadané parametry nebyly nalezeny žádné nabídky.
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 <?php endif; ?>
             </div>
-            
-            <!-- Price Search Form -->
-            <?php if (!$error): ?>
-            <div class="section">
-                <h2>Vyhledání cen</h2>
-                <form method="post">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="from_zone">Z:</label>
-                            <div class="autocomplete-container">
-                                <input type="text" 
-                                       class="autocomplete-input" 
-                                       id="from_input" 
-                                       placeholder="Začněte psát název zóny nebo zastávky..."
-                                       value="<?= htmlspecialchars($_POST['from_display'] ?? '') ?>"
-                                       autocomplete="off">
-                                <input type="hidden" name="from_zone" id="from_zone" value="<?= htmlspecialchars($_POST['from_zone'] ?? '') ?>">
-                                <input type="hidden" name="from_display" id="from_display" value="<?= htmlspecialchars($_POST['from_display'] ?? '') ?>">
-                                <div class="autocomplete-results" id="from_results"></div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="to_zone">Do:</label>
-                            <div class="autocomplete-container">
-                                <input type="text" 
-                                       class="autocomplete-input" 
-                                       id="to_input" 
-                                       placeholder="Začněte psát název zóny nebo zastávky..."
-                                       value="<?= htmlspecialchars($_POST['to_display'] ?? '') ?>"
-                                       autocomplete="off">
-                                <input type="hidden" name="to_zone" id="to_zone" value="<?= htmlspecialchars($_POST['to_zone'] ?? '') ?>">
-                                <input type="hidden" name="to_display" id="to_display" value="<?= htmlspecialchars($_POST['to_display'] ?? '') ?>">
-                                <div class="autocomplete-results" id="to_results"></div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="checkbox-group">
-                        <div class="checkbox-item">
-                            <input type="checkbox" name="network" id="network" <?= isset($_POST['network']) ? 'checked' : '' ?>>
-                            <label for="network">Síťové jízdné</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" name="bags" id="bags" <?= isset($_POST['bags']) ? 'checked' : '' ?>>
-                            <label for="bags">Zavazadla</label>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="btn">Vyhledat ceny</button>
-                </form>
-            </div>
-            <?php endif; ?>
-            
-            <!-- Price Results -->
-            <?php if ($priceError): ?>
-                <div class="section">
-                    <div class="alert alert-error">
-                        <strong>Chyba při vyhledávání:</strong> <?= htmlspecialchars($priceError) ?>
-                    </div>
-                </div>
-            <?php elseif ($priceResults): ?>
-                <div class="section">
-                    <h2>Výsledky vyhledávání</h2>
-                    
-                    <?php if (isset($priceResults['zoneDistance'])): ?>
-                        <p><strong>Vzdálenost zón:</strong> <?= $priceResults['zoneDistance'] ?></p>
-                    <?php endif; ?>
-                    
-                    <div class="results">
-                        <?php 
-                        $hasOffers = false;
-                        if (isset($priceResults['coverages'])):
-                            foreach ($priceResults['coverages'] as $coverage):
-                                if (isset($coverage['offers'])):
-                                    foreach ($coverage['offers'] as $offer):
-                                        $hasOffers = true;
-                                        
-                                        // Find CP and TP names
-                                        $cpName = 'N/A';
-                                        $tpName = 'N/A';
-                                        
-                                        foreach ($cps as $cp) {
-                                            if ($cp['number'] == $offer['cp']) {
-                                                $cpName = $cp['name'];
-                                                break;
-                                            }
-                                        }
-                                        
-                                        foreach ($tps as $tp) {
-                                            if ($tp['number'] == $offer['tp']) {
-                                                $tpName = $tp['name'];
-                                                break;
-                                            }
-                                        }
-                        ?>
-                        <div class="offer">
-                            <div class="price"><?= formatPrice($offer['price']) ?></div>
-                            
-                            <div class="offer-details">
-                                <div><strong>Profil:</strong> <?= htmlspecialchars($cpName) ?></div>
-                                <div><strong>Typ:</strong> <?= htmlspecialchars($tpName) ?></div>
-                                <div><strong>Formát:</strong> <?= htmlspecialchars($offer['format'] ?? 'N/A') ?></div>
-                                <div><strong>Platba:</strong> <?= htmlspecialchars($offer['payment'] ?? 'N/A') ?></div>
-                            </div>
-                            
-                            <?php if (isset($offer['products']) && !empty($offer['products'])): ?>
-                            <div class="products">
-                                <strong>Produkty:</strong>
-                                <?php foreach ($offer['products'] as $product): ?>
-                                <div class="product">
-                                    <?= htmlspecialchars($product['name']) ?>
-                                    <?php if (isset($product['validDurationMinutes'])): ?>
-                                        (<?= $product['validDurationMinutes'] ?> min)
-                                    <?php endif; ?>
-                                    <?php if (isset($product['validDurationDays'])): ?>
-                                        (<?= $product['validDurationDays'] ?> dní)
-                                    <?php endif; ?>
-                                    <?php if (isset($product['transfer']) && $product['transfer']): ?>
-                                        ✓ Přestupní
-                                    <?php endif; ?>
-                                </div>
-                                <?php endforeach; ?>
-                            </div>
-                            <?php endif; ?>
-                        </div>
-                        <?php 
-                                    endforeach;
-                                endif;
-                            endforeach;
-                        endif;
-                        
-                        if (!$hasOffers): ?>
-                            <div class="alert alert-info">
-                                Pro zadané parametry nebyly nalezeny žádné nabídky.
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
         </div>
-    </div>
+    </main>
+
+    <footer class="py-4 bg-gray-800 text-white text-center text-sm">
+        <div class="container mx-auto">
+            <p>© 2023 - Dopravní Údaje Kolektiv</p>
+        </div>
+    </footer>
     
     <script>
         class AutoComplete {

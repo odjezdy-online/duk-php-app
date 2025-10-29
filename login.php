@@ -112,59 +112,111 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Přihlášení</title>
+    <title>Přihlášení - Dopravní Údaje Kolektiv</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-100">
-    <div class="min-h-screen flex items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-md w-96">
-            <h2 class="text-2xl font-bold mb-6 text-center">Přihlášení</h2>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white text-center">
+                <i class="fas fa-bus text-4xl mb-3"></i>
+                <h1 class="text-2xl font-bold">Dopravní Údaje Kolektiv</h1>
+                <p class="text-blue-100 mt-2">Připojte se k naší komunitě</p>
+            </div>
             
-            <?php if (isset($_SESSION['error'])): ?>
-                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4">
-                    <?= htmlspecialchars($_SESSION['error']) ?>
-                    <?php unset($_SESSION['error']); ?>
+            <div class="p-8">
+                <?php if (isset($_SESSION['error'])): ?>
+                    <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <?= htmlspecialchars($_SESSION['error']) ?>
+                        </div>
+                        <?php unset($_SESSION['error']); ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (isset($_SESSION['success'])): ?>
+                    <div class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-r">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            <?= htmlspecialchars($_SESSION['success']) ?>
+                        </div>
+                        <?php unset($_SESSION['success']); ?>
+                    </div>
+                <?php endif; ?>
+
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Přihlášení</h2>
+
+                <!-- Discord Login Button -->
+                <div class="mb-6">
+                    <a href="discord_register.php" class="block w-full bg-[#5865F2] text-white text-center py-3 px-4 rounded-lg hover:bg-[#4752C4] dark:bg-[#5865F2] dark:hover:bg-[#4752C4] transition-all duration-200 transform hover:scale-105 shadow-md">
+                        <div class="flex items-center justify-center">
+                            <i class="fab fa-discord text-xl mr-3"></i>
+                            <span class="font-semibold">Přihlásit se přes Discord</span>
+                        </div>
+                    </a>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center">
+                        Rychlá registrace a přihlášení přes Discord
+                    </p>
                 </div>
-            <?php endif; ?>
 
-            <div class="space-y-4">
-                <a href="discord_register.php" class="block w-full bg-indigo-600 text-white text-center py-2 px-4 rounded hover:bg-indigo-700 transition duration-200">
-                    Přihlásit se přes Discord
-                </a>
-
-                <div class="relative">
+                <!-- Divider -->
+                <div class="relative mb-6">
                     <div class="absolute inset-0 flex items-center">
                         <div class="w-full border-t border-gray-300"></div>
                     </div>
                     <div class="relative flex justify-center text-sm">
-                        <span class="px-2 bg-white text-gray-500">nebo</span>
+                        <span class="px-3 bg-white text-gray-500 font-medium">nebo klasické přihlášení</span>
                     </div>
                 </div>
 
-                <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" class="space-y-4">
+                <!-- Traditional Login Form -->
+                <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" class="space-y-5">
                     <div>
-                        <label for="username" class="block text-sm font-medium text-gray-700">Uživatelské jméno</label>
-                        <input type="text" name="username" id="username" 
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 <?php echo (!empty($username_err)) ? 'border-red-500' : ''; ?>"
-                            value="<?php echo $username ?? ''; ?>">
+                        <label for="username" class="block text-sm font-semibold text-gray-700 mb-2">Uživatelské jméno</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
+                            <input type="text" name="username" id="username" 
+                                class="pl-10 w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 <?php echo (!empty($username_err)) ? 'border-red-500 bg-red-50' : ''; ?>"
+                                placeholder="Zadejte uživatelské jméno"
+                                value="<?php echo $username ?? ''; ?>">
+                        </div>
                         <?php if (!empty($username_err)): ?>
-                            <p class="mt-1 text-sm text-red-600"><?php echo $username_err; ?></p>
+                            <p class="mt-2 text-sm text-red-600 flex items-center">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                <?php echo $username_err; ?>
+                            </p>
                         <?php endif; ?>
                     </div>
                     
                     <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700">Heslo</label>
-                        <input type="password" name="password" id="password"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 <?php echo (!empty($password_err)) ? 'border-red-500' : ''; ?>">
+                        <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">Heslo</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
+                            <input type="password" name="password" id="password"
+                                class="pl-10 w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 <?php echo (!empty($password_err)) ? 'border-red-500 bg-red-50' : ''; ?>"
+                                placeholder="Zadejte heslo">
+                        </div>
                         <?php if (!empty($password_err)): ?>
-                            <p class="mt-1 text-sm text-red-600"><?php echo $password_err; ?></p>
+                            <p class="mt-2 text-sm text-red-600 flex items-center">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                <?php echo $password_err; ?>
+                            </p>
                         <?php endif; ?>
                     </div>
 
-                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200">
+                    <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-105 shadow-md font-semibold">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
                         Přihlásit se
                     </button>
                 </form>
+
+                <!-- Additional Info -->
+                <div class="mt-6 text-center text-sm text-gray-600">
+                    <p>Nový uživatel? <a href="discord_register.php" class="text-blue-600 hover:text-blue-800 font-semibold">Zaregistrujte se přes Discord</a></p>
+                </div>
             </div>
         </div>
     </div>

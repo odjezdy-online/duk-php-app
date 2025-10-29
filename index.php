@@ -430,10 +430,20 @@ if (file_exists('bus_data.json')) {
     </script>
 </head>
 <body>
-    <header class="py-6 mb-8 bg-primary-700 text-white">
+    <header class="py-6 mb-8 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
         <div class="container mx-auto px-4">
-            <h1 class="text-3xl md:text-4xl font-bold text-center">Informace o veřejné dopravě</h1>
-            <p class="text-primary-200 text-center mt-2">Sledujte aktuální odjezdy a polohy vozidel v reálném čase</p>
+            <h1 class="text-3xl md:text-4xl font-bold text-center">Dopravní Údaje Kolektiv</h1>
+            <p class="text-blue-200 text-center mt-2">Sledujte aktuální odjezdy a polohy vozidel v reálném čase</p>
+            <div class="mt-4 flex justify-center space-x-4">
+                <a href="login.php" class="bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Přihlášení
+                </a>
+                <a href="discord_register.php" class="bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                    <i class="fab fa-discord mr-2"></i>
+                    Registrace přes Discord
+                </a>
+            </div>
         </div>
     </header>
 

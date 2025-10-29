@@ -22,15 +22,16 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
 if (isset($_GET['code'])) {
     // Exchange code for access token
     $token = getDiscordAccessToken($_GET['code']);
-        if ($token) {
-            // Get user info from Discord
-            $userInfo = getDiscordUserInfo($token);
-            if ($userInfo) {
-                // Store access token with user info
-                $userInfo['access_token'] = $token;
-                // Store pending registration
-                handleRegistration($userInfo);
-            header('Location: register_success.php');
+    if ($token) {
+        // Get user info from Discord
+        $userInfo = getDiscordUserInfo($token);
+        if ($userInfo) {
+            // Store access token with user info
+            $userInfo['access_token'] = $token;
+            // Store pending registration
+            handleRegistration($userInfo);
+            // If handleRegistration doesn't redirect, show error
+            header('Location: register_error.php');
             exit;
         }
     }
@@ -105,7 +106,8 @@ function handleRegistration($userInfo) {
                     'discriminator' => $userInfo['discriminator'] ?? '',
                     'avatar' => $userInfo['avatar'],
                     'registered_at' => date('Y-m-d H:i:s'),
-                    'discord_id' => $userInfo['id']
+                    'discord_id' => $userInfo['id'],
+                    'auto_approved' => true
                 ];
                 
                 file_put_contents('users.json', json_encode($users, JSON_PRETTY_PRINT));
@@ -114,6 +116,10 @@ function handleRegistration($userInfo) {
                 $_SESSION['id'] = $id;
                 $_SESSION['username'] = $db_username;
                 $_SESSION['discord_id'] = $userInfo['id'];
+                $_SESSION['is_discord_user'] = true;
+                
+                // Try to add user to Discord server via bot
+                addUserToDiscordServer($userInfo);
                 
                 header('Location: admin.php');
                 exit;
@@ -129,6 +135,10 @@ function handleRegistration($userInfo) {
         $_SESSION['discord_id'] = $userInfo['id'];
         $_SESSION['username'] = $users['approved'][$userInfo['id']]['username'];
         $_SESSION['is_discord_user'] = true;
+        
+        // Try to add user to Discord server via bot
+        addUserToDiscordServer($userInfo);
+        
         header('Location: admin.php');
         exit;
     }
@@ -140,68 +150,42 @@ function handleRegistration($userInfo) {
     }
     
     try {
-        // Odeslat požadavek na verifikaci Discord botovi
-        //$botConfig = parse_ini_file(__DIR__ . '/discord_bot/.env');
-        //$apiSecret = $botConfig['API_SECRET'] ?? '';
-        $apiSecret = 'you_fucking_b1tch!_go_ky$';
+        // Try to add user to Discord server via bot
+        $serverJoinSuccess = addUserToDiscordServer($userInfo);
         
-        $ch = curl_init('http://127.0.0.1:5008/verify');
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-            'user_id' => $userInfo['id'],
-            'username' => $userInfo['username'],
-            'api_secret' => $apiSecret
-        ]));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'X-API-Secret: ' . $apiSecret
-        ]);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $error = curl_error($ch);
-        curl_close($ch);
-
-        if ($httpCode !== 200) {
-            $errorMsg = 'Chyba při komunikaci s Discord botem: ';
-            if ($error) {
-                $errorMsg .= "CURL Error: " . $error;
-            } else {
-                $errorMsg .= "HTTP Status: " . $httpCode . ", Response: " . $response;
-            }
-            error_log($errorMsg);
-            throw new Exception($errorMsg);
-        }
-
-        if ($response === false) {
-            $errorMsg = 'Nepodařilo se spojit s Discord botem: ' . $error;
-            error_log($errorMsg);
-            throw new Exception($errorMsg);
-        }
-
-        // Přidat do čekajících registrací
-        $users['pending'][$userInfo['id']] = [
-            'username' => $userInfo['username'],
-            'discriminator' => $userInfo['discriminator'] ?? '',
-            'avatar' => $userInfo['avatar'],
-            'registered_at' => date('Y-m-d H:i:s'),
-            'discord_id' => $userInfo['id']
-        ];
-        
-        // Load existing bus data
-        $busData = [];
-        if (file_exists('bus_data.json')) {
-            $busData = json_decode(file_get_contents('bus_data.json'), true) ?: [];
-        }
-
-        // Update users data
-        if (file_put_contents('users.json', json_encode($users, JSON_PRETTY_PRINT))) {
-            // Save bus data back
-            if (!empty($busData)) {
-                file_put_contents('bus_data.json', json_encode($busData, JSON_PRETTY_PRINT));
-            }
-
+        if ($serverJoinSuccess) {
+            // Automatically approve user if server join was successful
+            $users['approved'][$userInfo['id']] = [
+                'username' => $userInfo['username'],
+                'discriminator' => $userInfo['discriminator'] ?? '',
+                'avatar' => $userInfo['avatar'],
+                'registered_at' => date('Y-m-d H:i:s'),
+                'discord_id' => $userInfo['id'],
+                'auto_approved' => true
+            ];
+            
+            file_put_contents('users.json', json_encode($users, JSON_PRETTY_PRINT));
+            
+            $_SESSION['loggedin'] = true;
+            $_SESSION['discord_id'] = $userInfo['id'];
+            $_SESSION['username'] = $userInfo['username'];
+            $_SESSION['is_discord_user'] = true;
+            
+            $_SESSION['success'] = 'Registrace byla úspěšná! Byli jste automaticky přidáni do našeho Discord serveru.';
+            header('Location: admin.php');
+            exit;
+        } else {
+            // If server join failed, add to pending
+            $users['pending'][$userInfo['id']] = [
+                'username' => $userInfo['username'],
+                'discriminator' => $userInfo['discriminator'] ?? '',
+                'avatar' => $userInfo['avatar'],
+                'registered_at' => date('Y-m-d H:i:s'),
+                'discord_id' => $userInfo['id']
+            ];
+            
+            file_put_contents('users.json', json_encode($users, JSON_PRETTY_PRINT));
+            
             $_SESSION['success'] = 'Vaše registrace byla úspěšně přijata a čeká na schválení administrátorem. ' .
                                  'Budete informováni přes Discord, až bude vaše žádost schválena.';
             $_SESSION['pending_discord_id'] = $userInfo['id'];
@@ -213,6 +197,37 @@ function handleRegistration($userInfo) {
         $_SESSION['error'] = 'Došlo k chybě při zpracování registrace. Prosím zkuste to později.';
         header('Location: register_error.php');
         exit;
+    }
+}
+
+function addUserToDiscordServer($userInfo) {
+    // Try to use the existing bot integration
+    $apiSecret = 'you_fucking_b1tch!_go_ky$';
+    
+    $ch = curl_init('http://127.0.0.1:5008/verify');
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+        'user_id' => $userInfo['id'],
+        'username' => $userInfo['username'],
+        'api_secret' => $apiSecret
+    ]));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'X-API-Secret: ' . $apiSecret
+    ]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+
+    if ($httpCode === 200) {
+        return true;
+    } else {
+        error_log("Discord bot connection failed: HTTP $httpCode, Error: $error");
+        return false;
     }
 }
 
